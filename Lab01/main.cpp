@@ -1,5 +1,11 @@
 #include <iostream>
 
+/*
+ * Проверка числа на простоту
+ *
+ * @param number число, которое необходимо проверить.
+ * @return возвращает true, если число простое, иначе false.
+ */
 int isprime(int number){
     if (number < 2){
         return 0;
