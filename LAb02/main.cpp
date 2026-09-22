@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <string>
 
 using namespace std;
 
@@ -170,9 +171,9 @@ void countShipsVoid(void* p_data, int n)
 /*
  * Главная функция программы.
  *
- * Создает динамический двумерный массив,
- * заполняет его случайными значениями 0 и 1,
- * выводит меню и выполняет выбранную пользователем операцию.
+ * Программа циклически создает карту бухты,
+ * выполняет выбранное действие и запускается снова.
+ * Для завершения программы необходимо ввести слово stop.
  *
  * @return возвращает 0 при успешном завершении программы.
  */
@@ -180,63 +181,106 @@ int main()
 {
     srand(time(0));
 
-    int n = 0;
+    const string STOP_WORD = "stop";
 
-    cout << "Введите N: ";
-    cin >> n;
+    string command = "";
 
-    int** p_map = new int*[n];
+    while(command != STOP_WORD){
+        int n = 0;
 
-    for(int i = 0; i < n; i++){
-        p_map[i] = new int[n];
-    }
+        cout << "\nВведите N: ";
+        cin >> n;
 
-    for(int i = 0; i < n; i++){
-        for(int j = 0; j < n; j++){
-            p_map[i][j] = rand() % 2;
+        if(n <= 0){
+            cout << "Размер карты должен быть больше 0.\n";
+
+            cout << "\nВведите stop для завершения "
+                 << "или любое другое слово для продолжения: ";
+
+            cin >> command;
+
+            continue;
         }
-    }
 
-    cout << "\nКарта:\n";
-    printMap(p_map, n);
+        int** p_map = new int*[n];
 
-    int choice = 0;
+        for(int i = 0; i < n; i++){
+            p_map[i] = new int[n];
+        }
 
-    cout << "\n1 - Подсчитать корабли\n";
-    cout << "2 - Отразить карту\n";
-    cout << "3 - Удалить корабль по координатам\n";
-    cout << "4 - Подсчитать через void*\n";
-    cout << "Выберите действие: ";
+        for(int i = 0; i < n; i++){
+            for(int j = 0; j < n; j++){
+                p_map[i][j] = rand() % 2;
+            }
+        }
 
-    cin >> choice;
-
-    if(choice == 1){
-        countShips(p_map, n);
-    }
-    else if(choice == 2){
-        mirrorMap(p_map, n);
+        cout << "\nКарта:\n";
         printMap(p_map, n);
+
+        int choice = 0;
+
+        cout << "\n1 - Подсчитать корабли\n";
+        cout << "2 - Отразить карту\n";
+        cout << "3 - Удалить корабль по координатам\n";
+        cout << "4 - Подсчитать через void*\n";
+        cout << "Выберите действие: ";
+
+        cin >> choice;
+
+        if(choice == 1){
+            countShips(p_map, n);
+        }
+        else if(choice == 2){
+            mirrorMap(p_map, n);
+
+            cout << "\nОтраженная карта:\n";
+            printMap(p_map, n);
+        }
+        else if(choice == 3){
+            int row = 0;
+            int column = 0;
+
+            cout << "Введите строку от 0 до " << n - 1 << ": ";
+            cin >> row;
+
+            cout << "Введите столбец от 0 до " << n - 1 << ": ";
+            cin >> column;
+
+            if(
+                row >= 0 &&
+                row < n &&
+                column >= 0 &&
+                column < n
+            ){
+                deleteShip(p_map, &row, &column);
+
+                cout << "\nКарта после удаления:\n";
+                printMap(p_map, n);
+            }
+            else{
+                cout << "Координаты находятся за пределами карты.\n";
+            }
+        }
+        else if(choice == 4){
+            countShipsVoid((void*)p_map, n);
+        }
+        else{
+            cout << "Такой операции нет.\n";
+        }
+
+        for(int i = 0; i < n; i++){
+            delete[] p_map[i];
+        }
+
+        delete[] p_map;
+
+        cout << "\nВведите stop для завершения "
+             << "или любое другое слово для продолжения: ";
+
+        cin >> command;
     }
-    else if(choice == 3){
-        int row = 0;
-        int column = 0;
 
-        cout << "Введите строку и столбец: ";
-        cin >> row >> column;
-
-        deleteShip(p_map, &row, &column);
-
-        printMap(p_map, n);
-    }
-    else if(choice == 4){
-        countShipsVoid((void*)p_map, n);
-    }
-
-    for(int i = 0; i < n; i++){
-        delete[] p_map[i];
-    }
-
-    delete[] p_map;
+    cout << "\nПрограмма завершена.\n";
 
     return 0;
 }
