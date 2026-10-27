@@ -210,6 +210,7 @@ public:
      */
     double repair() {
         double const old_wear = _wear;
+
         double const recovery_percent =
             getRandomDouble(0.5, 0.8);
 
@@ -522,6 +523,7 @@ private:
     vector<JumpRope> _jump_ropes;
     vector<Dumbbells> _dumbbells;
     vector<string> _usage_history;
+
     double _total_repair_cost;
 
 
@@ -538,6 +540,7 @@ private:
             SUDDEN_BREAKDOWN_CHANCE
         ) {
             ball.breakEquipment();
+
             return true;
         }
 
@@ -558,6 +561,7 @@ private:
             SUDDEN_BREAKDOWN_CHANCE
         ) {
             jump_rope.breakEquipment();
+
             return true;
         }
 
@@ -578,6 +582,7 @@ private:
             SUDDEN_BREAKDOWN_CHANCE
         ) {
             dumbbells.breakEquipment();
+
             return true;
         }
 
@@ -895,6 +900,7 @@ public:
 
         if(show_process) {
             cout << "\nТРЕНИРОВКА\n";
+
             cout << "Количество упражнений: "
                  << exercise_count << "\n\n";
         }
@@ -1011,7 +1017,8 @@ public:
         for(Ball const& ball : _balls) {
             if(!ball.isAvailable()) {
                 repair_cost +=
-                    ball.getCost() * REPAIR_PERCENT;
+                    ball.getCost() *
+                    REPAIR_PERCENT;
             }
         }
 
@@ -1070,7 +1077,8 @@ public:
     void repairEquipment() {
         for(Ball& ball : _balls) {
             if(ball.getWear() > REPLACEMENT_WEAR) {
-                _total_repair_cost += ball.repair();
+                _total_repair_cost +=
+                    ball.repair();
             }
         }
 
@@ -1209,10 +1217,15 @@ public:
     void printReplacementPlan() const {
         cout << "\nПЛАН ЗАМЕНЫ\n";
 
+        bool replacement_needed = false;
+
         for(Ball const& ball : _balls) {
             if(ball.getWear() > REPLACEMENT_WEAR) {
+                replacement_needed = true;
+
                 cout << "Мяч: рекомендуется замена, износ "
-                     << ball.getWear() << "%\n";
+                     << ball.getWear()
+                     << "%\n";
             }
         }
 
@@ -1221,6 +1234,8 @@ public:
                 jump_rope.getWear() >
                 REPLACEMENT_WEAR
             ) {
+                replacement_needed = true;
+
                 cout << "Скакалка: рекомендуется замена, износ "
                      << jump_rope.getWear()
                      << "%\n";
@@ -1232,10 +1247,16 @@ public:
                 dumbbells.getWear() >
                 REPLACEMENT_WEAR
             ) {
+                replacement_needed = true;
+
                 cout << "Гантели: рекомендуется замена, износ "
                      << dumbbells.getWear()
                      << "%\n";
             }
+        }
+
+        if(!replacement_needed) {
+            cout << "Замена инвентаря пока не требуется.\n";
         }
     }
 };
@@ -1276,13 +1297,23 @@ int main() {
     );
 
     gym.conductWorkout();
+
     gym.printReport();
+
     gym.printUsageHistory();
+
     gym.repairEquipment();
+
     gym.simulateHundredWorkouts();
+
     gym.printReport();
+
     gym.printUsageStatistics();
+
     gym.printReplacementPlan();
+
+    cout << "\nНажмите Enter для завершения программы...";
+    cin.get();
 
     return 0;
 }
