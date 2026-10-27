@@ -8,20 +8,10 @@ using namespace std;
 
 const double MIN_RANDOM_COEFFICIENT = 0.5;
 const double MAX_RANDOM_COEFFICIENT = 2.0;
-const double REPAIR_PERCENT = 0.2;
 const double REPLACEMENT_WEAR = 70.0;
 const double BREAKDOWN_WEAR = 80.0;
 const double SUDDEN_BREAKDOWN_CHANCE = 0.01;
-
-random_device random_device_generator;
-mt19937 random_generator(random_device_generator());
-
-
-enum class EquipmentType {
-    Ball,
-    JumpRope,
-    Dumbbells
-};
+const double REPAIR_PERCENT = 0.2;
 
 
 /*
@@ -32,7 +22,11 @@ enum class EquipmentType {
  * @return возвращает случайное целое число.
  */
 int getRandomInt(int const min_value, int const max_value) {
+    static random_device random_device_generator;
+    static mt19937 random_generator(random_device_generator());
+
     uniform_int_distribution<int> distribution(min_value, max_value);
+
     return distribution(random_generator);
 }
 
@@ -44,8 +38,18 @@ int getRandomInt(int const min_value, int const max_value) {
  * @param max_value максимальное значение.
  * @return возвращает случайное вещественное число.
  */
-double getRandomDouble(double const min_value, double const max_value) {
-    uniform_real_distribution<double> distribution(min_value, max_value);
+double getRandomDouble(
+    double const min_value,
+    double const max_value
+) {
+    static random_device random_device_generator;
+    static mt19937 random_generator(random_device_generator());
+
+    uniform_real_distribution<double> distribution(
+        min_value,
+        max_value
+    );
+
     return distribution(random_generator);
 }
 
@@ -64,7 +68,7 @@ private:
 protected:
 
     /*
-     * Добавление износа спортивному инвентарю.
+     * Увеличение износа инвентаря.
      *
      * @param wear_value величина дополнительного износа.
      * @return ничего не возвращает.
@@ -83,8 +87,8 @@ public:
      * Создание спортивного инвентаря.
      *
      * @param type тип инвентаря.
-     * @param wear_resistance износостойкость.
-     * @param cost стоимость.
+     * @param wear_resistance износостойкость от 1 до 100.
+     * @param cost стоимость инвентаря.
      */
     SportEquipment(
         string const& type,
@@ -122,7 +126,7 @@ public:
     /*
      * Получение стоимости.
      *
-     * @return возвращает стоимость.
+     * @return возвращает стоимость инвентаря.
      */
     double getCost() const {
         return _cost;
@@ -160,6 +164,16 @@ public:
 
 
     /*
+     * Увеличение количества использований.
+     *
+     * @return ничего не возвращает.
+     */
+    void registerUsage() {
+        _usage_count++;
+    }
+
+
+    /*
      * Проверка доступности инвентаря.
      *
      * @return возвращает true, если предмет не сломан.
@@ -172,20 +186,10 @@ public:
     /*
      * Проверка необходимости замены.
      *
-     * @return возвращает true при износе больше 70 процентов.
+     * @return возвращает true при износе более 70 процентов.
      */
     bool needsReplacement() const {
         return _wear > REPLACEMENT_WEAR;
-    }
-
-
-    /*
-     * Регистрация использования инвентаря.
-     *
-     * @return ничего не возвращает.
-     */
-    void registerUsage() {
-        _usage_count++;
     }
 
 
@@ -206,7 +210,8 @@ public:
      */
     double repair() {
         double const old_wear = _wear;
-        double const recovery_percent = getRandomDouble(0.5, 0.8);
+        double const recovery_percent =
+            getRandomDouble(0.5, 0.8);
 
         _wear -= _wear * recovery_percent;
 
@@ -214,10 +219,13 @@ public:
             _wear = 0.0;
         }
 
-        double const damage_coefficient = old_wear / 100.0;
+        double const damage_coefficient =
+            old_wear / 100.0;
 
         double const repair_cost =
-            _cost * REPAIR_PERCENT * damage_coefficient;
+            _cost *
+            REPAIR_PERCENT *
+            damage_coefficient;
 
         return repair_cost;
     }
@@ -225,7 +233,7 @@ public:
 
 
 /*
- * Класс мяча.
+ * Класс спортивного мяча.
  */
 class Ball : public SportEquipment {
 private:
@@ -238,7 +246,7 @@ public:
      *
      * @param diameter диаметр мяча.
      * @param wear_resistance износостойкость.
-     * @param cost стоимость.
+     * @param cost стоимость мяча.
      */
     Ball(
         double const diameter,
@@ -253,8 +261,8 @@ public:
     /*
      * Использование мяча.
      *
-     * @param intensity интенсивность упражнения.
-     * @param duration длительность упражнения.
+     * @param intensity интенсивность от 1 до 5.
+     * @param duration длительность в минутах.
      * @return возвращает полученный износ.
      */
     double use(
@@ -263,10 +271,11 @@ public:
     ) {
         double const base_wear_rate = 0.06;
 
-        double const random_coefficient = getRandomDouble(
-            MIN_RANDOM_COEFFICIENT,
-            MAX_RANDOM_COEFFICIENT
-        );
+        double const random_coefficient =
+            getRandomDouble(
+                MIN_RANDOM_COEFFICIENT,
+                MAX_RANDOM_COEFFICIENT
+            );
 
         double const resistance_coefficient =
             (101.0 - getWearResistance()) / 100.0;
@@ -286,19 +295,9 @@ public:
 
 
     /*
-     * Получение диаметра мяча.
-     *
-     * @return возвращает диаметр мяча.
-     */
-    double getDiameter() const {
-        return _diameter;
-    }
-
-
-    /*
      * Проверка состояния мяча.
      *
-     * @return возвращает описание состояния.
+     * @return возвращает описание состояния мяча.
      */
     string checkWear() const {
         if(getWear() >= 100.0) {
@@ -311,11 +310,21 @@ public:
 
         return "Мяч пригоден к использованию";
     }
+
+
+    /*
+     * Получение диаметра мяча.
+     *
+     * @return возвращает диаметр мяча.
+     */
+    double getDiameter() const {
+        return _diameter;
+    }
 };
 
 
 /*
- * Класс скакалки.
+ * Класс спортивной скакалки.
  */
 class JumpRope : public SportEquipment {
 private:
@@ -328,14 +337,18 @@ public:
      *
      * @param length длина скакалки.
      * @param wear_resistance износостойкость.
-     * @param cost стоимость.
+     * @param cost стоимость скакалки.
      */
     JumpRope(
         double const length,
         int const wear_resistance,
         double const cost
     ) :
-        SportEquipment("Скакалка", wear_resistance, cost),
+        SportEquipment(
+            "Скакалка",
+            wear_resistance,
+            cost
+        ),
         _length(length) {
     }
 
@@ -343,8 +356,8 @@ public:
     /*
      * Использование скакалки.
      *
-     * @param intensity интенсивность упражнения.
-     * @param duration длительность упражнения.
+     * @param intensity интенсивность от 1 до 5.
+     * @param duration длительность в минутах.
      * @return возвращает полученный износ.
      */
     double use(
@@ -353,10 +366,11 @@ public:
     ) {
         double const base_wear_rate = 0.09;
 
-        double const random_coefficient = getRandomDouble(
-            MIN_RANDOM_COEFFICIENT,
-            MAX_RANDOM_COEFFICIENT
-        );
+        double const random_coefficient =
+            getRandomDouble(
+                MIN_RANDOM_COEFFICIENT,
+                MAX_RANDOM_COEFFICIENT
+            );
 
         double const resistance_coefficient =
             (101.0 - getWearResistance()) / 100.0;
@@ -376,19 +390,9 @@ public:
 
 
     /*
-     * Получение длины скакалки.
-     *
-     * @return возвращает длину скакалки.
-     */
-    double getLength() const {
-        return _length;
-    }
-
-
-    /*
      * Проверка состояния скакалки.
      *
-     * @return возвращает описание состояния.
+     * @return возвращает описание состояния скакалки.
      */
     string checkWear() const {
         if(getWear() >= 100.0) {
@@ -401,11 +405,21 @@ public:
 
         return "Скакалка пригодна к использованию";
     }
+
+
+    /*
+     * Получение длины скакалки.
+     *
+     * @return возвращает длину скакалки.
+     */
+    double getLength() const {
+        return _length;
+    }
 };
 
 
 /*
- * Класс гантелей.
+ * Класс спортивных гантелей.
  */
 class Dumbbells : public SportEquipment {
 private:
@@ -418,14 +432,18 @@ public:
      *
      * @param weight вес гантелей.
      * @param wear_resistance износостойкость.
-     * @param cost стоимость.
+     * @param cost стоимость гантелей.
      */
     Dumbbells(
         double const weight,
         int const wear_resistance,
         double const cost
     ) :
-        SportEquipment("Гантели", wear_resistance, cost),
+        SportEquipment(
+            "Гантели",
+            wear_resistance,
+            cost
+        ),
         _weight(weight) {
     }
 
@@ -433,8 +451,8 @@ public:
     /*
      * Использование гантелей.
      *
-     * @param intensity интенсивность упражнения.
-     * @param duration длительность упражнения.
+     * @param intensity интенсивность от 1 до 5.
+     * @param duration длительность в минутах.
      * @return возвращает полученный износ.
      */
     double use(
@@ -443,10 +461,11 @@ public:
     ) {
         double const base_wear_rate = 0.04;
 
-        double const random_coefficient = getRandomDouble(
-            MIN_RANDOM_COEFFICIENT,
-            MAX_RANDOM_COEFFICIENT
-        );
+        double const random_coefficient =
+            getRandomDouble(
+                MIN_RANDOM_COEFFICIENT,
+                MAX_RANDOM_COEFFICIENT
+            );
 
         double const resistance_coefficient =
             (101.0 - getWearResistance()) / 100.0;
@@ -466,19 +485,9 @@ public:
 
 
     /*
-     * Получение веса гантелей.
-     *
-     * @return возвращает вес гантелей.
-     */
-    double getWeight() const {
-        return _weight;
-    }
-
-
-    /*
      * Проверка состояния гантелей.
      *
-     * @return возвращает описание состояния.
+     * @return возвращает описание состояния гантелей.
      */
     string checkWear() const {
         if(getWear() >= 100.0) {
@@ -491,6 +500,16 @@ public:
 
         return "Гантели пригодны к использованию";
     }
+
+
+    /*
+     * Получение веса гантелей.
+     *
+     * @return возвращает вес гантелей.
+     */
+    double getWeight() const {
+        return _weight;
+    }
 };
 
 
@@ -502,28 +521,324 @@ private:
     vector<Ball> _balls;
     vector<JumpRope> _jump_ropes;
     vector<Dumbbells> _dumbbells;
-
     vector<string> _usage_history;
-
     double _total_repair_cost;
 
+
     /*
-     * Проверка внезапной поломки предмета.
+     * Проверка внезапной поломки мяча.
      *
-     * @param item ссылка на предмет.
-     * @return возвращает true, если предмет сломался.
+     * @param ball проверяемый мяч.
+     * @return возвращает true при поломке.
      */
-    bool checkSuddenBreakdown(SportEquipment& item) {
+    bool checkSuddenBreakdown(Ball& ball) {
         if(
-            item.getWear() > BREAKDOWN_WEAR &&
-            getRandomDouble(0.0, 1.0) < SUDDEN_BREAKDOWN_CHANCE
+            ball.getWear() > BREAKDOWN_WEAR &&
+            getRandomDouble(0.0, 1.0) <
+            SUDDEN_BREAKDOWN_CHANCE
         ) {
-            item.breakEquipment();
+            ball.breakEquipment();
             return true;
         }
 
         return false;
     }
+
+
+    /*
+     * Проверка внезапной поломки скакалки.
+     *
+     * @param jump_rope проверяемая скакалка.
+     * @return возвращает true при поломке.
+     */
+    bool checkSuddenBreakdown(JumpRope& jump_rope) {
+        if(
+            jump_rope.getWear() > BREAKDOWN_WEAR &&
+            getRandomDouble(0.0, 1.0) <
+            SUDDEN_BREAKDOWN_CHANCE
+        ) {
+            jump_rope.breakEquipment();
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /*
+     * Проверка внезапной поломки гантелей.
+     *
+     * @param dumbbells проверяемые гантели.
+     * @return возвращает true при поломке.
+     */
+    bool checkSuddenBreakdown(Dumbbells& dumbbells) {
+        if(
+            dumbbells.getWear() > BREAKDOWN_WEAR &&
+            getRandomDouble(0.0, 1.0) <
+            SUDDEN_BREAKDOWN_CHANCE
+        ) {
+            dumbbells.breakEquipment();
+            return true;
+        }
+
+        return false;
+    }
+
+
+    /*
+     * Проверка наличия доступного инвентаря.
+     *
+     * @return возвращает true, если есть исправный предмет.
+     */
+    bool hasAvailableEquipment() const {
+        for(Ball const& ball : _balls) {
+            if(ball.isAvailable()) {
+                return true;
+            }
+        }
+
+        for(JumpRope const& jump_rope : _jump_ropes) {
+            if(jump_rope.isAvailable()) {
+                return true;
+            }
+        }
+
+        for(Dumbbells const& dumbbells : _dumbbells) {
+            if(dumbbells.isAvailable()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    /*
+     * Проведение упражнения с мячом.
+     *
+     * @param intensity интенсивность упражнения.
+     * @param duration длительность упражнения.
+     * @param show_process необходимость вывода информации.
+     * @return возвращает true, если упражнение выполнено.
+     */
+    bool useRandomBall(
+        int const intensity,
+        int const duration,
+        bool const show_process
+    ) {
+        vector<int> available_indexes;
+
+        for(size_t i = 0; i < _balls.size(); i++) {
+            if(_balls[i].isAvailable()) {
+                available_indexes.push_back(
+                    static_cast<int>(i)
+                );
+            }
+        }
+
+        if(available_indexes.empty()) {
+            return false;
+        }
+
+        int const random_index = getRandomInt(
+            0,
+            static_cast<int>(
+                available_indexes.size()
+            ) - 1
+        );
+
+        int const ball_index =
+            available_indexes[random_index];
+
+        Ball& ball = _balls[ball_index];
+
+        double const received_wear =
+            ball.use(intensity, duration);
+
+        string const history_record =
+            "Мяч, интенсивность: " +
+            to_string(intensity) +
+            ", длительность: " +
+            to_string(duration) +
+            " мин.";
+
+        _usage_history.push_back(history_record);
+
+        if(show_process) {
+            cout << "Инвентарь: Мяч\n";
+            cout << "Интенсивность: "
+                 << intensity << "\n";
+            cout << "Длительность: "
+                 << duration << " мин.\n";
+            cout << "Полученный износ: "
+                 << received_wear << "%\n";
+            cout << "Общий износ: "
+                 << ball.getWear() << "%\n";
+        }
+
+        if(ball.getWear() < 100.0) {
+            if(checkSuddenBreakdown(ball)) {
+                if(show_process) {
+                    cout << "Внезапная поломка!\n";
+                }
+            }
+        }
+
+        return true;
+    }
+
+
+    /*
+     * Проведение упражнения со скакалкой.
+     *
+     * @param intensity интенсивность упражнения.
+     * @param duration длительность упражнения.
+     * @param show_process необходимость вывода информации.
+     * @return возвращает true, если упражнение выполнено.
+     */
+    bool useRandomJumpRope(
+        int const intensity,
+        int const duration,
+        bool const show_process
+    ) {
+        vector<int> available_indexes;
+
+        for(size_t i = 0; i < _jump_ropes.size(); i++) {
+            if(_jump_ropes[i].isAvailable()) {
+                available_indexes.push_back(
+                    static_cast<int>(i)
+                );
+            }
+        }
+
+        if(available_indexes.empty()) {
+            return false;
+        }
+
+        int const random_index = getRandomInt(
+            0,
+            static_cast<int>(
+                available_indexes.size()
+            ) - 1
+        );
+
+        int const jump_rope_index =
+            available_indexes[random_index];
+
+        JumpRope& jump_rope =
+            _jump_ropes[jump_rope_index];
+
+        double const received_wear =
+            jump_rope.use(intensity, duration);
+
+        string const history_record =
+            "Скакалка, интенсивность: " +
+            to_string(intensity) +
+            ", длительность: " +
+            to_string(duration) +
+            " мин.";
+
+        _usage_history.push_back(history_record);
+
+        if(show_process) {
+            cout << "Инвентарь: Скакалка\n";
+            cout << "Интенсивность: "
+                 << intensity << "\n";
+            cout << "Длительность: "
+                 << duration << " мин.\n";
+            cout << "Полученный износ: "
+                 << received_wear << "%\n";
+            cout << "Общий износ: "
+                 << jump_rope.getWear() << "%\n";
+        }
+
+        if(jump_rope.getWear() < 100.0) {
+            if(checkSuddenBreakdown(jump_rope)) {
+                if(show_process) {
+                    cout << "Внезапная поломка!\n";
+                }
+            }
+        }
+
+        return true;
+    }
+
+
+    /*
+     * Проведение упражнения с гантелями.
+     *
+     * @param intensity интенсивность упражнения.
+     * @param duration длительность упражнения.
+     * @param show_process необходимость вывода информации.
+     * @return возвращает true, если упражнение выполнено.
+     */
+    bool useRandomDumbbells(
+        int const intensity,
+        int const duration,
+        bool const show_process
+    ) {
+        vector<int> available_indexes;
+
+        for(size_t i = 0; i < _dumbbells.size(); i++) {
+            if(_dumbbells[i].isAvailable()) {
+                available_indexes.push_back(
+                    static_cast<int>(i)
+                );
+            }
+        }
+
+        if(available_indexes.empty()) {
+            return false;
+        }
+
+        int const random_index = getRandomInt(
+            0,
+            static_cast<int>(
+                available_indexes.size()
+            ) - 1
+        );
+
+        int const dumbbells_index =
+            available_indexes[random_index];
+
+        Dumbbells& dumbbells =
+            _dumbbells[dumbbells_index];
+
+        double const received_wear =
+            dumbbells.use(intensity, duration);
+
+        string const history_record =
+            "Гантели, интенсивность: " +
+            to_string(intensity) +
+            ", длительность: " +
+            to_string(duration) +
+            " мин.";
+
+        _usage_history.push_back(history_record);
+
+        if(show_process) {
+            cout << "Инвентарь: Гантели\n";
+            cout << "Интенсивность: "
+                 << intensity << "\n";
+            cout << "Длительность: "
+                 << duration << " мин.\n";
+            cout << "Полученный износ: "
+                 << received_wear << "%\n";
+            cout << "Общий износ: "
+                 << dumbbells.getWear() << "%\n";
+        }
+
+        if(dumbbells.getWear() < 100.0) {
+            if(checkSuddenBreakdown(dumbbells)) {
+                if(show_process) {
+                    cout << "Внезапная поломка!\n";
+                }
+            }
+        }
+
+        return true;
+    }
+
 
 public:
 
@@ -571,11 +886,12 @@ public:
     /*
      * Проведение одной тренировки.
      *
-     * @param show_process определяет необходимость вывода процесса.
+     * @param show_process необходимость вывода процесса.
      * @return ничего не возвращает.
      */
     void conductWorkout(bool const show_process = true) {
-        int const exercise_count = getRandomInt(5, 15);
+        int const exercise_count =
+            getRandomInt(5, 15);
 
         if(show_process) {
             cout << "\nТРЕНИРОВКА\n";
@@ -584,135 +900,66 @@ public:
         }
 
         for(int i = 0; i < exercise_count; i++) {
-            int const intensity = getRandomInt(1, 5);
-            int const duration = getRandomInt(1, 10);
-
-            EquipmentType const type =
-                static_cast<EquipmentType>(getRandomInt(0, 2));
-
-            if(type == EquipmentType::Ball && !_balls.empty()) {
-                int const index = getRandomInt(
-                    0,
-                    static_cast<int>(_balls.size()) - 1
-                );
-
-                Ball& ball = _balls[index];
-
-                if(!ball.isAvailable()) {
-                    continue;
+            if(!hasAvailableEquipment()) {
+                if(show_process) {
+                    cout << "Доступного инвентаря нет.\n";
                 }
 
-                double const received_wear =
-                    ball.use(intensity, duration);
+                break;
+            }
 
-                _usage_history.push_back(
-                    "Мяч, интенсивность: " +
-                    to_string(intensity) +
-                    ", длительность: " +
-                    to_string(duration)
-                );
+            int const intensity =
+                getRandomInt(1, 5);
+
+            int const duration =
+                getRandomInt(1, 10);
+
+            bool exercise_completed = false;
+
+            while(!exercise_completed) {
+                int const equipment_type =
+                    getRandomInt(1, 3);
 
                 if(show_process) {
-                    cout << "Упражнение " << i + 1 << ":\n";
-                    cout << "Инвентарь: Мяч\n";
-                    cout << "Интенсивность: " << intensity << "\n";
-                    cout << "Длительность: " << duration << " мин.\n";
-                    cout << "Полученный износ: "
-                         << fixed << setprecision(2)
-                         << received_wear << "%\n";
-                    cout << "Общий износ: "
-                         << ball.getWear() << "%\n\n";
+                    cout << "Упражнение "
+                         << i + 1 << ":\n";
                 }
 
-                checkSuddenBreakdown(ball);
+                if(equipment_type == 1) {
+                    exercise_completed =
+                        useRandomBall(
+                            intensity,
+                            duration,
+                            show_process
+                        );
+                }
+                else if(equipment_type == 2) {
+                    exercise_completed =
+                        useRandomJumpRope(
+                            intensity,
+                            duration,
+                            show_process
+                        );
+                }
+                else {
+                    exercise_completed =
+                        useRandomDumbbells(
+                            intensity,
+                            duration,
+                            show_process
+                        );
+                }
             }
-            else if(
-                type == EquipmentType::JumpRope &&
-                !_jump_ropes.empty()
-            ) {
-                int const index = getRandomInt(
-                    0,
-                    static_cast<int>(_jump_ropes.size()) - 1
-                );
 
-                JumpRope& jump_rope = _jump_ropes[index];
-
-                if(!jump_rope.isAvailable()) {
-                    continue;
-                }
-
-                double const received_wear =
-                    jump_rope.use(intensity, duration);
-
-                _usage_history.push_back(
-                    "Скакалка, интенсивность: " +
-                    to_string(intensity) +
-                    ", длительность: " +
-                    to_string(duration)
-                );
-
-                if(show_process) {
-                    cout << "Упражнение " << i + 1 << ":\n";
-                    cout << "Инвентарь: Скакалка\n";
-                    cout << "Интенсивность: " << intensity << "\n";
-                    cout << "Длительность: " << duration << " мин.\n";
-                    cout << "Полученный износ: "
-                         << fixed << setprecision(2)
-                         << received_wear << "%\n";
-                    cout << "Общий износ: "
-                         << jump_rope.getWear() << "%\n\n";
-                }
-
-                checkSuddenBreakdown(jump_rope);
-            }
-            else if(
-                type == EquipmentType::Dumbbells &&
-                !_dumbbells.empty()
-            ) {
-                int const index = getRandomInt(
-                    0,
-                    static_cast<int>(_dumbbells.size()) - 1
-                );
-
-                Dumbbells& dumbbells = _dumbbells[index];
-
-                if(!dumbbells.isAvailable()) {
-                    continue;
-                }
-
-                double const received_wear =
-                    dumbbells.use(intensity, duration);
-
-                _usage_history.push_back(
-                    "Гантели, интенсивность: " +
-                    to_string(intensity) +
-                    ", длительность: " +
-                    to_string(duration)
-                );
-
-                if(show_process) {
-                    cout << "Упражнение " << i + 1 << ":\n";
-                    cout << "Инвентарь: Гантели\n";
-                    cout << "Интенсивность: " << intensity << "\n";
-                    cout << "Длительность: " << duration << " мин.\n";
-                    cout << "Полученный износ: "
-                         << fixed << setprecision(2)
-                         << received_wear << "%\n";
-                    cout << "Общий износ: "
-                         << dumbbells.getWear() << "%\n\n";
-                }
-
-                checkSuddenBreakdown(dumbbells);
-            }
-            else {
-                i--;
+            if(show_process) {
+                cout << "\n";
             }
         }
     }
 
 
     /*
-     * Вывод состояния всего спортивного инвентаря.
+     * Вывод состояния всего инвентаря.
      *
      * @return ничего не возвращает.
      */
@@ -723,40 +970,100 @@ public:
 
         for(size_t i = 0; i < _balls.size(); i++) {
             cout << i + 1
-                 << ". Износ: "
+                 << ". Диаметр: "
+                 << _balls[i].getDiameter()
+                 << " см | Износ: "
                  << fixed << setprecision(2)
                  << _balls[i].getWear()
-                 << "%, состояние: "
-                 << _balls[i].getCondition()
-                 << "%\n";
+                 << "% | "
+                 << _balls[i].checkWear()
+                 << "\n";
         }
 
         cout << "\nСкакалки:\n";
 
         for(size_t i = 0; i < _jump_ropes.size(); i++) {
             cout << i + 1
-                 << ". Износ: "
+                 << ". Длина: "
+                 << _jump_ropes[i].getLength()
+                 << " м | Износ: "
                  << _jump_ropes[i].getWear()
-                 << "%, состояние: "
-                 << _jump_ropes[i].getCondition()
-                 << "%\n";
+                 << "% | "
+                 << _jump_ropes[i].checkWear()
+                 << "\n";
         }
 
         cout << "\nГантели:\n";
 
         for(size_t i = 0; i < _dumbbells.size(); i++) {
             cout << i + 1
-                 << ". Износ: "
+                 << ". Вес: "
+                 << _dumbbells[i].getWeight()
+                 << " кг | Износ: "
                  << _dumbbells[i].getWear()
-                 << "%, состояние: "
-                 << _dumbbells[i].getCondition()
-                 << "%\n";
+                 << "% | "
+                 << _dumbbells[i].checkWear()
+                 << "\n";
+        }
+
+        double repair_cost = 0.0;
+
+        for(Ball const& ball : _balls) {
+            if(!ball.isAvailable()) {
+                repair_cost +=
+                    ball.getCost() * REPAIR_PERCENT;
+            }
+        }
+
+        for(JumpRope const& jump_rope : _jump_ropes) {
+            if(!jump_rope.isAvailable()) {
+                repair_cost +=
+                    jump_rope.getCost() *
+                    REPAIR_PERCENT;
+            }
+        }
+
+        for(Dumbbells const& dumbbells : _dumbbells) {
+            if(!dumbbells.isAvailable()) {
+                repair_cost +=
+                    dumbbells.getCost() *
+                    REPAIR_PERCENT;
+            }
+        }
+
+        cout << "\nСтоимость ремонта сломанных предметов: "
+             << repair_cost << " руб.\n";
+
+        cout << "\nРекомендации по замене:\n";
+
+        for(Ball const& ball : _balls) {
+            if(ball.needsReplacement()) {
+                cout << "- Мяч с износом "
+                     << ball.getWear()
+                     << "%\n";
+            }
+        }
+
+        for(JumpRope const& jump_rope : _jump_ropes) {
+            if(jump_rope.needsReplacement()) {
+                cout << "- Скакалка с износом "
+                     << jump_rope.getWear()
+                     << "%\n";
+            }
+        }
+
+        for(Dumbbells const& dumbbells : _dumbbells) {
+            if(dumbbells.needsReplacement()) {
+                cout << "- Гантели с износом "
+                     << dumbbells.getWear()
+                     << "%\n";
+            }
         }
     }
 
 
     /*
-     * Выполнение ремонта всего сильно изношенного инвентаря.
+     * Ремонт сильно изношенного инвентаря.
      *
      * @return ничего не возвращает.
      */
@@ -768,21 +1075,50 @@ public:
         }
 
         for(JumpRope& jump_rope : _jump_ropes) {
-            if(jump_rope.getWear() > REPLACEMENT_WEAR) {
-                _total_repair_cost += jump_rope.repair();
+            if(
+                jump_rope.getWear() >
+                REPLACEMENT_WEAR
+            ) {
+                _total_repair_cost +=
+                    jump_rope.repair();
             }
         }
 
         for(Dumbbells& dumbbells : _dumbbells) {
-            if(dumbbells.getWear() > REPLACEMENT_WEAR) {
-                _total_repair_cost += dumbbells.repair();
+            if(
+                dumbbells.getWear() >
+                REPLACEMENT_WEAR
+            ) {
+                _total_repair_cost +=
+                    dumbbells.repair();
             }
         }
     }
 
 
     /*
-     * Проведение ста тренировок.
+     * Вывод истории использования.
+     *
+     * @return ничего не возвращает.
+     */
+    void printUsageHistory() const {
+        cout << "\nИСТОРИЯ\n";
+
+        for(
+            size_t i = 0;
+            i < _usage_history.size();
+            i++
+        ) {
+            cout << i + 1
+                 << ". "
+                 << _usage_history[i]
+                 << "\n";
+        }
+    }
+
+
+    /*
+     * Симуляция ста тренировок.
      *
      * @return ничего не возвращает.
      */
@@ -797,32 +1133,110 @@ public:
 
 
     /*
-     * Вывод истории использования.
+     * Вывод статистики использования.
      *
      * @return ничего не возвращает.
      */
-    void printUsageHistory() const {
-        cout << "\nИСТОРИЯ\n";
+    void printUsageStatistics() const {
+        cout << "\nСТАТИСТИКА\n";
 
-        for(size_t i = 0; i < _usage_history.size(); i++) {
-            cout << i + 1
-                 << ". "
-                 << _usage_history[i]
-                 << "\n";
+        int max_usage_count = -1;
+        string most_used_item = "Нет";
+
+        for(Ball const& ball : _balls) {
+            cout << "Мяч: "
+                 << ball.getUsageCount()
+                 << " использований\n";
+
+            if(ball.getUsageCount() > max_usage_count) {
+                max_usage_count =
+                    ball.getUsageCount();
+
+                most_used_item = "Мяч";
+            }
         }
+
+        for(JumpRope const& jump_rope : _jump_ropes) {
+            cout << "Скакалка: "
+                 << jump_rope.getUsageCount()
+                 << " использований\n";
+
+            if(
+                jump_rope.getUsageCount() >
+                max_usage_count
+            ) {
+                max_usage_count =
+                    jump_rope.getUsageCount();
+
+                most_used_item = "Скакалка";
+            }
+        }
+
+        for(Dumbbells const& dumbbells : _dumbbells) {
+            cout << "Гантели: "
+                 << dumbbells.getUsageCount()
+                 << " использований\n";
+
+            if(
+                dumbbells.getUsageCount() >
+                max_usage_count
+            ) {
+                max_usage_count =
+                    dumbbells.getUsageCount();
+
+                most_used_item = "Гантели";
+            }
+        }
+
+        cout << "\nСамый используемый предмет: "
+             << most_used_item << "\n";
+
+        cout << "Количество использований: "
+             << max_usage_count << "\n";
+
+        cout << "Общие расходы на ремонт: "
+             << fixed << setprecision(2)
+             << _total_repair_cost
+             << " руб.\n";
     }
 
 
     /*
-     * Вывод общей стоимости ремонта.
+     * Вывод плана замены инвентаря.
      *
      * @return ничего не возвращает.
      */
-    void printRepairCost() const {
-        cout << "\nОбщая стоимость ремонта: "
-             << fixed << setprecision(2)
-             << _total_repair_cost
-             << " руб.\n";
+    void printReplacementPlan() const {
+        cout << "\nПЛАН ЗАМЕНЫ\n";
+
+        for(Ball const& ball : _balls) {
+            if(ball.getWear() > REPLACEMENT_WEAR) {
+                cout << "Мяч: рекомендуется замена, износ "
+                     << ball.getWear() << "%\n";
+            }
+        }
+
+        for(JumpRope const& jump_rope : _jump_ropes) {
+            if(
+                jump_rope.getWear() >
+                REPLACEMENT_WEAR
+            ) {
+                cout << "Скакалка: рекомендуется замена, износ "
+                     << jump_rope.getWear()
+                     << "%\n";
+            }
+        }
+
+        for(Dumbbells const& dumbbells : _dumbbells) {
+            if(
+                dumbbells.getWear() >
+                REPLACEMENT_WEAR
+            ) {
+                cout << "Гантели: рекомендуется замена, износ "
+                     << dumbbells.getWear()
+                     << "%\n";
+            }
+        }
     }
 };
 
@@ -867,7 +1281,8 @@ int main() {
     gym.repairEquipment();
     gym.simulateHundredWorkouts();
     gym.printReport();
-    gym.printRepairCost();
+    gym.printUsageStatistics();
+    gym.printReplacementPlan();
 
     return 0;
 }
